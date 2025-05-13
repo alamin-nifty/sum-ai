@@ -9,16 +9,27 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@auth/mongodb-adapter": "^3.9.1",
+    "@stripe/stripe-js": "^7.3.0",
+    "@tanstack/react-query": "^5.76.0",
+    "axios": "^1.9.0",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.14.2",
+    "next": "15.3.2",
+    "next-auth": "^4.24.11",
+    "openai": "^4.98.0",
+    "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.2"
+    "stripe": "^18.1.0",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4.1.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "tailwindcss": "^4.1.6",
+    "typescript": "^5"
   }
 }
