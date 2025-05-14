@@ -8,15 +8,13 @@ if (!MONGODB_URI) {
   );
 }
 
-interface Cached {
+let cached: {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
-}
+} = { conn: null, promise: null };
 
-let cached: Cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+if (!(global as any).mongoose) {
+  (global as any).mongoose = cached;
 }
 
 async function connectDB() {
@@ -29,7 +27,10 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts);
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      console.log("Connected to MongoDB");
+      return mongoose;
+    });
   }
 
   try {

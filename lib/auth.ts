@@ -1,8 +1,8 @@
-import clientPromise, { getDb } from "@/lib/mongodb-adapter";
+import clientPromise from "@/lib/mongodb-adapter";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import { NextAuthOptions } from "next-auth";
-import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
+import TodoistProvider from "next-auth/providers/todoist";
 
 export const authOptions: NextAuthOptions = {
   adapter: MongoDBAdapter(clientPromise),
@@ -11,30 +11,18 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
+    TodoistProvider({
+      clientId: process.env.TODOIST_CLIENT_ID!,
+      clientSecret: process.env.TODOIST_CLIENT_SECRET!,
     }),
   ],
   session: {
     strategy: "jwt",
   },
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/error",
-    verifyRequest: "/auth/verify-request",
-  },
   callbacks: {
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
       }
       return session;
     },
@@ -44,24 +32,66 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async signIn({ user, account }) {
+      // For Todoist, save the tokens
+      if (account?.provider === "todoist" && user.email) {
+        const client = await clientPromise;
+        const db = client.db();
+
+        await db.collection("users").updateOne(
+          { email: user.email },
+          {
+            $set: {
+              "integrations.todoist": {
+                accessToken: account.access_token,
+                refreshToken: account.refresh_token,
+                expiresAt: new Date(
+                  Date.now() + Number(account.expires_in || 0) * 1000
+                ),
+              },
+            },
+          }
+        );
+      }
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // After sign in, redirect to dashboard instead of homepage
+      if (url.startsWith(baseUrl)) {
+        return `${baseUrl}/dashboard`;
+      }
+      // Allows relative callback URLs
+      else if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      return url;
+    },
+  },
+  pages: {
+    signIn: "/auth/signin",
   },
   events: {
     async createUser({ user }) {
       // Initialize user with free tier
-      const db = await getDb();
-      await db.collection("users").updateOne(
-        { email: user.email },
-        {
-          $set: {
-            subscription: {
-              status: "free",
+      if (user.email) {
+        const client = await clientPromise;
+        const db = client.db();
+
+        await db.collection("users").updateOne(
+          { email: user.email },
+          {
+            $set: {
+              subscription: {
+                status: "free",
+              },
+              usage: {
+                summariesThisMonth: 0,
+              },
+              integrations: {},
             },
-            usage: {
-              summariesThisMonth: 0,
-            },
-          },
-        }
-      );
+          }
+        );
+      }
     },
   },
 };
