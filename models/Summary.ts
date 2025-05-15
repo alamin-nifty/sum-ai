@@ -5,7 +5,7 @@ export interface ISummary extends mongoose.Document {
   originalText: string;
   summary: string;
   tasks: string[];
-  source: "gmail" | "slack" | "teams" | "other";
+  source: "gmail" | "slack" | "teams" | "custom" | "other";
   metadata: {
     threadId?: string;
     messageId?: string;
@@ -38,7 +38,7 @@ const SummarySchema = new mongoose.Schema<ISummary>(
     ],
     source: {
       type: String,
-      enum: ["gmail", "slack", "teams", "other"],
+      enum: ["gmail", "slack", "teams", "custom", "other"],
       required: true,
     },
     metadata: {

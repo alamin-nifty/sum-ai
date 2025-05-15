@@ -53,77 +53,126 @@ export async function POST(req: Request) {
     const trimmedText = text.slice(0, MAX_TEXT_LENGTH);
 
     // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are an AI assistant that summarizes text and extracts actionable tasks.
-                   Provide output in the following format:
-                   SUMMARY: A concise 2-3 sentence summary of the text.
-                   TASKS:
-                   - Task 1
-                   - Task 2
-                   - etc.`,
-        },
-        {
-          role: "user",
-          content: trimmedText,
-        },
-      ],
-      temperature: 0.7,
-    });
+    console.log("Calling OpenAI API with text length:", trimmedText.length);
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: `You are an AI assistant that summarizes text and extracts actionable tasks.
+                    You MUST follow this exact format in your response:
 
-    const response = completion.choices[0].message.content;
+                    SUMMARY: Write a concise 2-3 sentence summary of the text here.
 
-    // Parse the response to extract summary and tasks
-    let summary = "";
-    let tasks: string[] = [];
+                    TASKS:
+                    - Task 1
+                    - Task 2
+                    - etc.
 
-    if (response) {
-      const summaryMatch = response.match(/SUMMARY:(.*?)(?=TASKS:|$)/);
-      const tasksMatch = response.match(/TASKS:(.*?)$/);
+                    Do not deviate from this format or add any additional text. Start with SUMMARY: followed by your summary, then TASKS: followed by the list of tasks.`,
+          },
+          {
+            role: "user",
+            content: trimmedText,
+          },
+        ],
+        temperature: 0.7,
+      });
 
-      if (summaryMatch && summaryMatch[1]) {
-        summary = summaryMatch[1].trim();
-      } else {
-        summary = "Summary could not be generated.";
+      const response = completion.choices[0].message.content;
+      console.log("OpenAI response:", response);
+
+      // Parse the response to extract summary and tasks
+      let summary = "";
+      let tasks: string[] = [];
+
+      if (response) {
+        // Try to extract summary using regex
+        const summaryMatch = response.match(/SUMMARY:(.*?)(?=TASKS:|$)/);
+        console.log("Summary match:", summaryMatch);
+
+        if (summaryMatch && summaryMatch[1]) {
+          summary = summaryMatch[1].trim();
+        } else {
+          // Fallback: if format doesn't match, use the whole response as summary
+          summary = response.trim();
+        }
+
+        // Try to extract tasks
+        const tasksMatch = response.match(/TASKS:(.*?)$/);
+        console.log("Tasks match:", tasksMatch);
+
+        if (tasksMatch && tasksMatch[1]) {
+          tasks = tasksMatch[1]
+            .split("\n")
+            .map((task) => task.replace(/^-\s*/, "").trim())
+            .filter((task) => task.length > 0);
+        }
       }
 
-      if (tasksMatch && tasksMatch[1]) {
-        tasks = tasksMatch[1]
-          .split("\n")
-          .map((task) => task.replace(/^-\s*/, "").trim())
-          .filter((task) => task.length > 0);
+      console.log("Parsed summary:", summary);
+      console.log("Parsed tasks:", tasks);
+
+      // 5. Save to database
+      const summaryDoc = await Summary.create({
+        userId: user._id,
+        originalText: text,
+        summary,
+        tasks,
+        source: source === "custom" ? "other" : source || "other",
+        metadata: {
+          ...metadata,
+          timestamp: new Date(),
+        },
+      });
+
+      // 6. Update user usage
+      user.usage.summariesThisMonth += 1;
+      user.usage.lastSummaryDate = new Date();
+      await user.save();
+
+      // 7. Return response
+      return NextResponse.json({
+        summary,
+        tasks,
+        id: summaryDoc._id,
+      });
+    } catch (openaiError) {
+      console.error("OpenAI API error:", openaiError);
+      return NextResponse.json(
+        {
+          error: "Error connecting to OpenAI API",
+          details:
+            openaiError instanceof Error
+              ? openaiError.message
+              : String(openaiError),
+        },
+        { status: 502 }
+      );
+    }
+  } catch (error) {
+    console.error("Summarization error:", error);
+
+    // Provide more specific error messages based on the error type
+    if (error instanceof Error) {
+      // Mongoose validation errors
+      if (error.name === "ValidationError") {
+        return NextResponse.json(
+          { error: `Validation failed: ${error.message}` },
+          { status: 400 }
+        );
+      }
+
+      // OpenAI API errors
+      if (error.message.includes("OpenAI")) {
+        return NextResponse.json(
+          { error: `OpenAI API error: ${error.message}` },
+          { status: 502 }
+        );
       }
     }
 
-    // 5. Save to database
-    const summaryDoc = await Summary.create({
-      userId: user._id,
-      originalText: text,
-      summary,
-      tasks,
-      source: source || "other",
-      metadata: {
-        ...metadata,
-        timestamp: new Date(),
-      },
-    });
-
-    // 6. Update user usage
-    user.usage.summariesThisMonth += 1;
-    user.usage.lastSummaryDate = new Date();
-    await user.save();
-
-    // 7. Return response
-    return NextResponse.json({
-      summary,
-      tasks,
-      id: summaryDoc._id,
-    });
-  } catch (error) {
-    console.error("Summarization error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

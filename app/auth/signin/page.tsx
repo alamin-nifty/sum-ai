@@ -8,10 +8,25 @@ export default function SignIn() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    await signIn("google", { callbackUrl });
+    setError(null);
+    console.log("Starting Google sign-in with callback URL:", callbackUrl);
+
+    try {
+      const result = await signIn("google", {
+        callbackUrl,
+        redirect: true,
+      });
+      console.log("Sign-in result:", result);
+    } catch (err) {
+      console.error("Sign-in error:", err);
+      setError(err instanceof Error ? err.message : "Unknown sign-in error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -23,6 +38,12 @@ export default function SignIn() {
             Continue with your Google account
           </p>
         </div>
+
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-100 rounded">
+            Error: {error}
+          </div>
+        )}
 
         <div className="mt-8 space-y-6">
           <button

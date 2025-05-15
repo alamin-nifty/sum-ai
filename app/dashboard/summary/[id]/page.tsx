@@ -1,6 +1,7 @@
 "use client";
 
 import AddToTodoist from "@/components/AddToTodoist";
+import DashboardNav from "@/components/DashboardNav";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -75,47 +76,50 @@ export default function SummaryDetail() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-6">
-        <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
-          ← Back to Dashboard
-        </Link>
-      </div>
-
-      <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold mb-4">Summary</h1>
-
+    <div className="min-h-screen bg-gray-100">
+      <DashboardNav />
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Summary</h2>
-          <p className="text-gray-700">{summary?.summary}</p>
+          <Link href="/dashboard" className="text-blue-600 hover:text-blue-800">
+            ← Back to Dashboard
+          </Link>
         </div>
 
-        {summary?.tasks && summary.tasks.length > 0 && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h1 className="text-2xl font-bold mb-4">Summary</h1>
+
           <div className="mb-6">
-            <h2 className="text-lg font-medium mb-2">Tasks</h2>
-            <ul className="list-disc pl-5 space-y-2">
-              {summary?.tasks?.map((task, index) => (
-                <li key={index}>
-                  <div className="text-gray-700">{task}</div>
-                  <AddToTodoist task={task} />
-                </li>
-              ))}
-            </ul>
+            <h2 className="text-lg font-medium mb-2">Summary</h2>
+            <p className="text-gray-700">{summary?.summary}</p>
           </div>
-        )}
 
-        <div className="mb-6">
-          <h2 className="text-lg font-medium mb-2">Original Text</h2>
-          <div className="bg-gray-50 p-4 rounded-md max-h-96 overflow-y-auto">
-            <pre className="whitespace-pre-wrap text-sm text-gray-700">
-              {summary?.originalText}
-            </pre>
+          {summary?.tasks && summary.tasks.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-lg font-medium mb-2">Tasks</h2>
+              <ul className="list-disc pl-5 space-y-2">
+                {summary?.tasks?.map((task, index) => (
+                  <li key={index}>
+                    <div className="text-gray-700">{task}</div>
+                    <AddToTodoist task={task} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mb-6">
+            <h2 className="text-lg font-medium mb-2">Original Text</h2>
+            <div className="bg-gray-50 p-4 rounded-md max-h-96 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm text-gray-700">
+                {summary?.originalText}
+              </pre>
+            </div>
           </div>
-        </div>
 
-        <div className="text-sm text-gray-500">
-          Created on:{" "}
-          {summary?.createdAt && new Date(summary.createdAt).toLocaleString()}
+          <div className="text-sm text-gray-500">
+            Created on:{" "}
+            {summary?.createdAt && new Date(summary.createdAt).toLocaleString()}
+          </div>
         </div>
       </div>
     </div>
