@@ -1,36 +1,115 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Summarize AI
+
+## Project Overview
+
+Summarize AI is a SaaS web application that automatically summarizes email/chat threads and extracts actionable tasks, integrating with productivity tools like Asana and Todoist.
+
+## Tech Stack
+
+- **Frontend**: Next.js 13+, React, Tailwind CSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB with Mongoose
+- **Authentication**: NextAuth.js (planned)
+- **AI**: OpenAI GPT-3.5-turbo (planned)
+- **External Services**: Asana API, Todoist API, Stripe (planned)
 
 ## Getting Started
 
-First, run the development server:
+### Environment Variables
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Create a `.env.local` file with the following variables:
+
+```env
+# MongoDB
+MONGODB_URI=your_mongodb_uri
+
+# NextAuth (to be configured)
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+
+# Google OAuth (to be configured)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# OpenAI (to be configured)
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Dependencies
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Currently installed:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install mongodb mongoose
+```
 
-## Learn More
+To be installed:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install next-auth @auth/mongodb-adapter zod @tanstack/react-query axios openai stripe @stripe/stripe-js
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Database Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Create MongoDB Atlas account
+2. Create new cluster (free tier)
+3. Get connection string
+4. Update MONGODB_URI in .env.local
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+sum-ai/
+├── app/                    # Next.js 13+ app directory
+│   ├── api/               # API routes (to be implemented)
+│   └── auth/              # Authentication pages (to be implemented)
+├── components/            # React components (to be implemented)
+├── lib/                   # Utility functions
+│   └── mongodb.ts        # MongoDB connection
+├── models/               # Mongoose models
+│   ├── User.ts          # User model
+│   └── Summary.ts       # Summary model
+├── types/               # TypeScript types
+│   └── index.ts        # Shared types
+└── public/             # Static assets
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Next Steps
+
+1.  **Authentication Setup**
+    *   Install NextAuth.js
+    *   Configure Google OAuth
+    *   Set up authentication pages
+2.  **API Routes**
+    *   Create summarization endpoint
+    *   Implement rate limiting
+    *   Add error handling
+3.  **Frontend Development**
+    *   Create dashboard layout
+    *   Implement summary history view
+    *   Build integration management UI
+4.  **Chrome Extension**
+    *   Set up extension project structure
+    *   Create manifest.json
+    *   Implement content scripts
+5.  **Task Integration**
+    *   Set up Asana API integration
+    *   Set up Todoist API integration
+    *   Implement OAuth flow
+
+## Development Guidelines
+
+1.  Follow TypeScript best practices
+2.  Use Zod for input validation
+3.  Implement proper error handling
+4.  Add appropriate logging
+5.  Write tests for new features
+
+## Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+- [NextAuth.js Documentation](https://next-auth.js.org)
+- [OpenAI API Documentation](https://platform.openai.com/docs)
+- [Asana API Documentation](https://developers.asana.com/docs)
+- [Todoist API Documentation](https://developer.todoist.com)
